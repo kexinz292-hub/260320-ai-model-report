@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>全球AI大模型竞争力跟踪报告</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --ey-dark:#2E2E38;--ey-yellow:#FFE600;--ey-gray-dark:#747480;--ey-gray-med:#C4C4CD;
+  --ey-gray-light:#F6F6FA;--ey-white:#FFFFFF;
+  --ey-blue:#35A4E8;--ey-blue-dark:#155CB4;--ey-green:#2DB757;--ey-teal:#00A28A;
+  --ey-cyan:#42C9C2;--ey-orange:#FF810A;--ey-orange-light:#FF9831;
+  --ey-magenta:#B14891;--ey-purple:#724BC3;
+  --ey-bg-dark:#161618;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter','Noto Sans SC',sans-serif;background:var(--ey-dark);color:var(--ey-white);line-height:1.7;overflow-x:hidden}
+.ey-accent{color:var(--ey-yellow)}
+.ey-yellow-bg{background:var(--ey-yellow);color:var(--ey-dark)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--ey-dark)}
+::-webkit-scrollbar-thumb{background:var(--ey-gray-med);border-radius:3px}
+
+/* Hero */
+.hero{min-height:100vh;position:relative;display:flex;align-items:center;overflow:hidden;background:var(--ey-bg-dark)}
+#lidar-canvas{position:absolute;inset:0;z-index:1}
+.hero-gradient{position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(46,46,56,.7) 0%,rgba(46,46,56,.4) 40%,rgba(46,46,56,.8) 100%)}
+.hero-path{position:absolute;bottom:15%;left:0;right:0;height:120px;z-index:3}
+.hero-path svg{width:100%;height:100%}
+.hero-content{position:relative;z-index:10;max-width:1200px;margin:0 auto;padding:2rem}
+
+/* TOC */
+.toc{position:fixed;left:0;top:0;width:260px;height:100vh;background:rgba(46,46,56,.96);backdrop-filter:blur(12px);border-right:1px solid rgba(255,255,255,.08);z-index:1000;overflow-y:auto;padding:2rem 1.2rem;transition:transform .3s}
+.toc-link{display:block;padding:.6rem 1rem;color:var(--ey-gray-med);text-decoration:none;border-radius:8px;font-size:.85rem;margin-bottom:.3rem;transition:all .2s;border-left:2px solid transparent}
+.toc-link:hover,.toc-link.active{color:var(--ey-yellow);background:rgba(255,230,0,.06);border-left-color:var(--ey-yellow)}
+.toc-link.sub{padding-left:2rem;font-size:.8rem}
+.main{margin-left:260px;min-height:100vh}
+
+/* Cards */
+.card{background:rgba(255,255,255,.04);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:2rem;transition:all .3s}
+.card:hover{border-color:rgba(255,230,0,.3);transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.3)}
+.card-highlight{border-left:3px solid var(--ey-yellow)}
+
+/* Badge */
+.badge{display:inline-block;padding:.2rem .7rem;border-radius:999px;font-size:.75rem;font-weight:600}
+
+/* Tooltip */
+.tip{position:relative;cursor:help;border-bottom:1px dashed var(--ey-gray-med)}
+.tip .tip-text{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--ey-dark);border:1px solid var(--ey-gray-med);color:var(--ey-white);padding:.6rem 1rem;border-radius:8px;font-size:.78rem;width:280px;z-index:999;line-height:1.5;text-align:left}
+.tip:hover .tip-text{display:block}
+
+/* Table */
+.ey-table{width:100%;border-collapse:separate;border-spacing:0}
+.ey-table th{background:rgba(255,230,0,.1);color:var(--ey-yellow);padding:.8rem 1rem;font-size:.8rem;font-weight:600;text-align:left;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--ey-yellow)}
+.ey-table td{padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.06);font-size:.85rem}
+.ey-table tr:hover td{background:rgba(255,255,255,.03)}
+
+/* Chart container */
+.chart-box{background:rgba(22,22,24,.6);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:1.5rem}
+
+/* Divider */
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--ey-gray-med),transparent);margin:3rem 0}
+
+/* Section */
+section{padding:3rem 2rem;max-width:1200px;margin:0 auto}
+.section-title{font-size:1.6rem;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.6rem}
+.section-sub{color:var(--ey-gray-dark);font-size:.9rem;margin-bottom:2rem}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .6s ease forwards}
+
+/* Tabs */
+.tab-bar{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.tab-btn{padding:.5rem 1.2rem;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:var(--ey-gray-med);cursor:pointer;font-size:.85rem;transition:all .2s}
+.tab-btn.active{background:var(--ey-yellow);color:var(--ey-dark);border-color:var(--ey-yellow);font-weight:600}
+.tab-btn:hover:not(.active){border-color:var(--ey-yellow);color:var(--ey-yellow)}
+
+/* Mobile */
+.menu-btn{display:none;position:fixed;top:1rem;left:1rem;z-index:1001;background:var(--ey-yellow);color:var(--ey-dark);border:none;border-radius:8px;padding:.5rem .8rem;cursor:pointer;font-size:1.2rem}
+@media(max-width:900px){
+  .toc{transform:translateX(-100%)}
+  .toc.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .menu-btn{display:block}
+  .hero-content h1{font-size:2rem!important}
+  .content-grid{grid-template-columns:1fr!important}
+}
+
+/* Glow */
+.glow-yellow{box-shadow:0 0 30px rgba(255,230,0,.15)}
+.glow-blue{box-shadow:0 0 30px rgba(53,164,232,.15)}
+.stat-num{font-size:2.5rem;font-weight:800;line-height:1}
+</style>
+</head>
+<body>
+
+<button class="menu-btn" onclick="document.querySelector('.toc').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+
+<!-- TOC -->
+<nav class="toc">
+  <div style="margin-bottom:1.5rem">
+    <div style="font-size:1.3rem;font-weight:800;color:var(--ey-yellow)">AI Report</div>
+    <div style="font-size:.7rem;color:var(--ey-gray-dark);letter-spacing:.15em;text-transform:uppercase">AI Model Tracker</div>
+  </div>
+  <a href="#hero" class="toc-link active">概览</a>
+  <a href="#arena" class="toc-link">全球榜单排名</a>
+  <a href="#china" class="toc-link">中国模型矩阵</a>
+  <a href="#global" class="toc-link">国际模型矩阵</a>
+  <a href="#bench" class="toc-link">基准测试详解</a>
+  <a href="#cost" class="toc-link">成本分析</a>
+  <a href="cost" class="toc-link sub">企业 API 成本</a>
+  <a href="cost" class="toc-link sub">个人用户成本</a>
+  <a href="#deploy" class="toc-link">私有化部署</a>
+  <a href="#vertical" class="toc-link">垂直领域能力</a>
+  <a href="#trend" class="toc-link">趋势洞察</a>
+  <a href="#recommend" class="toc-link">建议方案</a>
+</nav>
+
+<div class="main">
+
+<!-- HERO -->
+<section class="hero" id="hero" style="max-width:none;padding:0">
+  <canvas id="lidar-canvas"></canvas>
+  <div class="hero-gradient"></div>
+  <div class="hero-path">
+    <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="pathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#FFE600;stop-opacity:0"/>
+          <stop offset="20%" style="stop-color:#FFE600;stop-opacity:0.8"/>
+          <stop offset="80%" style="stop-color:#35A4E8;stop-opacity:0.8"/>
+          <stop offset="100%" style="stop-color:#35A4E8;stop-opacity:0"/>
+        </linearGradient>
+      </defs>
+      <path d="M0,80 Q360,20 720,70 T1440,50" stroke="url(#pathGrad)" stroke-width="3" fill="none"/>
+      <path d="M0,85 Q360,30 720,75 T1440,55" stroke="url(#pathGrad)" stroke-width="1" fill="none" opacity="0.4"/>
+      <!-- dots on path -->
+      <circle cx="200" cy="55" r="4" fill="#FFE600" opacity="0.9"/>
+      <circle cx="500" cy="52" r="3" fill="#FF9831" opacity="0.7"/>
+      <circle cx="750" cy="68" r="5" fill="#42C9C2" opacity="0.8"/>
+      <circle cx="1000" cy="62" r="3" fill="#35A4E8" opacity="0.9"/>
+      <circle cx="1250" cy="55" r="4" fill="#35A4E8" opacity="0.7"/>
+    </svg>
+  </div>
+  <div class="hero-content" style="width:100%">
+    <div style="font-size:.85rem;letter-spacing:.2em;color:var(--ey-yellow);text-transform:uppercase;margin-bottom:1rem">AI Research · Advisory</div>
+    <h1 style="font-size:3.2rem;font-weight:800;line-height:1.15;margin-bottom:1.5rem">
+      全球AI大模型<br><span style="color:var(--ey-yellow)">竞争力跟踪报告</span>
+    </h1>
+    <p style="font-size:1.1rem;color:var(--ey-gray-med);max-width:600px;margin-bottom:2rem">
+      2026年3月 · 覆盖中国与国际主流模型 · LMArena / Artificial Analysis / OpenRouter 三维度数据
+    </p>
+    <div style="display:flex;gap:2rem;flex-wrap:wrap">
+      <div><div class="stat-num" style="color:var(--ey-yellow)">20+</div><div style="color:var(--ey-gray-dark);font-size:.85rem">跟踪模型</div></div>
+      <div><div class="stat-num" style="color:var(--ey-blue)">6</div><div style="color:var(--ey-gray-dark);font-size:.85rem">基准维度</div></div>
+      <div><div class="stat-num" style="color:var(--ey-teal)">15+</div><div style="color:var(--ey-gray-dark);font-size:.85rem">企业场景</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ARENA RANKING -->
+<section id="arena">
+  <div class="section-title"><i class="fas fa-trophy" style="color:var(--ey-yellow)"></i> 全球榜单排名 (LMArena · 2026.03)</div>
+  <div class="section-sub">基于人类偏好盲评的 ELO 分数，数据来源 arena.ai，更新截至 2026年3月12日</div>
+
+  <div class="tab-bar" id="arena-tabs">
+    <button class="tab-btn active" onclick="showArena('text')">文本 Text</button>
+    <button class="tab-btn" onclick="showArena('code')">代码 Code</button>
+    <button class="tab-btn" onclick="showArena('vision')">视觉 Vision</button>
+    <button class="tab-btn" onclick="showArena('doc')">文档 Document</button>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <table class="ey-table" id="arena-table">
+      <thead><tr><th>#</th><th>模型</th><th>厂商</th><th>ELO</th><th>投票数</th><th>类型</th></tr></thead>
+      <tbody id="arena-body"></tbody>
+    </table>
+  </div>
+  <p style="color:var(--ey-gray-dark);font-size:.78rem;margin-top:.8rem"><i class="fas fa-info-circle"></i> ELO 分数基于人类偏好盲评（Chatbot Arena），分数越高代表人类偏好越强。类型中 <span class="badge" style="background:rgba(53,164,232,.2);color:var(--ey-blue)">开源</span> / <span class="badge" style="background:rgba(178,72,145,.2);color:var(--ey-magenta)">闭源</span></p>
+</section>
+
+<div class="divider"></div>
+
+<!-- CHINA MODELS -->
+<section id="china">
+  <div class="section-title"><i class="fas fa-flag" style="color:var(--ey-red,#FF4444)"></i> 中国大模型全景矩阵</div>
+  <div class="section-sub">涵盖主流商业化模型的核心参数、能力与价格</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:1.5rem" id="china-cards"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- GLOBAL MODELS -->
+<section id="global">
+  <div class="section-title"><i class="fas fa-globe" style="color:var(--ey-blue)"></i> 国际大模型全景矩阵</div>
+  <div class="section-sub">OpenAI、Google、Anthropic、Meta 等全球头部厂商</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:1.5rem" id="global-cards"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BENCHMARK EXPLANATIONS -->
+<section id="bench">
+  <div class="section-title"><i class="fas fa-microscope" style="color:var(--ey-teal)"></i> 基准测试指标详解</div>
+  <div class="section-sub">报告中使用的核心评测指标及其意义</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.2rem" id="bench-cards"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COST ANALYSIS -->
+<section id="cost">
+  <div class="section-title"><i class="fas fa-coins" style="color:var(--ey-orange)"></i> 成本分析</div>
+  <div class="section-sub">企业视角（API Token 定价）与个人视角（免费额度 / App 体验）双维度</div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showCost('enterprise')">企业 API 成本</button>
+    <button class="tab-btn" onclick="showCost('personal')">个人用户视角</button>
+  </div>
+
+  <div id="cost-enterprise">
+    <div class="chart-box" style="margin-bottom:1.5rem">
+      <div style="font-size:.85rem;color:var(--ey-gray-dark);margin-bottom:1rem">API 输入/输出 Token 价格对比（USD / 1M tokens）</div>
+      <canvas id="costChart" height="300"></canvas>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <table class="ey-table">
+        <thead><tr><th>模型</th><th>输入价格<br><span style="font-weight:400;text-transform:none;font-size:.7rem">$/1M tokens</span></th><th>输出价格<br><span style="font-weight:400;text-transform:none;font-size:.7rem">$/1M tokens</span></th><th>上下文窗口</th><th>性价比评级</th></tr></thead>
+        <tbody id="cost-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="cost-personal" style="display:none">
+    <div class="card" style="overflow-x:auto">
+      <table class="ey-table">
+        <thead><tr><th>模型</th><th>免费额度</th><th>Web/App</th><th>文件上传</th><th>语音</th><th>多模态</th><th>用户体验</th></tr></thead>
+        <tbody id="personal-table-body"></tbody>
+      </table>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <div style="font-size:.85rem;font-weight:600;color:var(--ey-yellow);margin-bottom:.5rem">💡 个人用户选择建议</div>
+      <ul style="font-size:.85rem;color:var(--ey-gray-med);list-style:disc;padding-left:1.5rem">
+        <li><strong style="color:var(--ey-white)">日常问答 & 写作：</strong>Kimi（免费额度大、长文本）、豆包（免费创意）、通义千问（免费全能）</li>
+        <li><strong style="color:var(--ey-white)">编程开发：</strong>Qwen Coder（免费代码强）、DeepSeek Coder（免费/低价）</li>
+        <li><strong style="color:var(--ey-white)">深度研究：</strong>Grok（X平台搜索强）、Gemini（Google搜索整合）</li>
+        <li><strong style="color:var(--ey-white)">专业咨询：</strong>ChatGPT Plus（$20/月功能最全）、Claude Pro（长文本+代码优）</li>
+        <li><strong style="color:var(--ey-white)">预算有限：</strong>DeepSeek、Qwen、豆包均提供充裕免费额度</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DEPLOY -->
+<section id="deploy">
+  <div class="section-title"><i class="fas fa-server" style="color:var(--ey-purple)"></i> 私有化部署难度评估</div>
+  <div class="section-sub">企业本地化部署的可行性与资源需求</div>
+
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <canvas id="deployChart" height="250"></canvas>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <table class="ey-table">
+      <thead><tr><th>模型</th><th>开源协议</th><th>最低 GPU</th><th>量化部署</th><th>难度</th><th>推荐场景</th></tr></thead>
+      <tbody id="deploy-table-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- VERTICAL -->
+<section id="vertical">
+  <div class="section-title"><i class="fas fa-layer-group" style="color:var(--ey-cyan)"></i> 垂直领域能力画像</div>
+  <div class="section-sub">各模型在细分场景的差异化优势</div>
+
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <canvas id="radarChart" height="350"></canvas>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem" id="vertical-cards"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TREND -->
+<section id="trend">
+  <div class="section-title"><i class="fas fa-chart-line" style="color:var(--ey-green)"></i> 趋势洞察</div>
+  <div class="section-sub">2026 Q1 关键发现</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.5rem">
+    <div class="card card-highlight">
+      <div style="font-size:.75rem;color:var(--ey-yellow);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">趋势 01</div>
+      <div style="font-weight:700;margin-bottom:.5rem">开源模型逼近闭源天花板</div>
+      <p style="font-size:.85rem;color:var(--ey-gray-dark)">GLM-5、Kimi K2.5、Qwen3.5 在 Arena 上已进入全球 Top 10。GLM-5 在代码赛道排名全球第8，开源模型在非推理场景已具备商业替代能力。</p>
+    </div>
+    <div class="card card-highlight">
+      <div style="font-size:.75rem;color:var(--ey-yellow);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">趋势 02</div>
+      <div style="font-weight:700;margin-bottom:.5rem">中国模型价格战白热化</div>
+      <p style="font-size:.85rem;color:var(--ey-gray-dark)">DeepSeek R1 输入价格低至 $0.27/1M tokens，Qwen 系列持续免费。国内厂商通过极低定价抢占开发者市场，企业部署成本较 OpenAI 降低 10-50 倍。</p>
+    </div>
+    <div class="card card-highlight">
+      <div style="font-size:.75rem;color:var(--ey-yellow);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">趋势 03</div>
+      <div style="font-weight:700;margin-bottom:.5rem">多模态成为标配</div>
+      <p style="font-size:.85rem;color:var(--ey-gray-dark)">GPT-5.4、Gemini 3.1 Pro、Grok 4.2 均原生支持图文音视频。Kimi K2.5 在 Vision 赛道排名全球第8，中国模型的多模态能力快速追赶。</p>
+    </div>
+    <div class="card card-highlight">
+      <div style="font-size:.75rem;color:var(--ey-yellow);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">趋势 04</div>
+      <div style="font-weight:700;margin-bottom:.5rem">推理模型主导高端市场</div>
+      <p style="font-size:.85rem;color:var(--ey-gray-dark)">Arena Text Top 5 中有 4 个是推理模型（thinking 模式）。企业在复杂数据分析、法律/金融推理场景应优先考虑推理模型，但需承担更高延迟和成本。</p>
+    </div>
+    <div class="card card-highlight">
+      <div style="font-size:.75rem;color:var(--ey-yellow);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">趋势 05</div>
+      <div style="font-weight:700;margin-bottom:.5rem">私有化部署门槛持续降低</div>
+      <p style="font-size:.85rem;color:var(--ey-gray-dark)">Qwen3.5 397B A17B 支持 MoE 架构量化到单卡运行，GLM-5 / Kimi K2.5 开源权重可商用。国产算力（华为昇腾）适配加速，企业私有化已进入"可用"阶段。</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- RECOMMEND -->
+<section id="recommend">
+  <div class="section-title"><i class="fas fa-lightbulb" style="color:var(--ey-yellow)"></i> 建议方案</div>
+  <div class="section-sub">根据不同企业需求场景的模型选型建议</div>
+
+  <div style="display:grid;gap:1.2rem" id="recommend-cards"></div>
+</section>
+
+<!-- Footer -->
+<footer style="text-align:center;padding:3rem 2rem;color:var(--ey-gray-dark);font-size:.78rem;border-top:1px solid rgba(255,255,255,.06)">
+  <div style="color:var(--ey-yellow);font-weight:700;font-size:1rem;margin-bottom:.5rem">AI Report</div>
+  <p>本报告由 AI Advisory 团队制作 · 数据截至 2026年3月13日</p>
+  <p>数据来源：LMArena (arena.ai) · Artificial Analysis · 各厂商官网 · OpenRouter</p>
+  <p style="margin-top:.5rem;color:var(--ey-gray-med)">© 2026 AI Research. All rights reserved. 本报告仅供参考。</p>
+</footer>
+
+</div><!-- /main -->
+
+<script>
+// ===== DATA =====
+const arenaData = {
+  text: [
+    {rank:1,model:'claude-opus-4-6',vendor:'Anthropic',elo:1503,votes:'310,399',type:'闭源'},
+    {rank:2,model:'grok-4.20-beta1',vendor:'xAI',elo:1496,votes:'6,063',type:'闭源'},
+    {rank:3,model:'gemini-3.1-pro-preview',vendor:'Google',elo:1492,votes:'10,521',type:'闭源'},
+    {rank:4,model:'gemini-3-pro',vendor:'Google',elo:1486,votes:'40,879',type:'闭源'},
+    {rank:5,model:'gpt-5.4-high',vendor:'OpenAI',elo:1485,votes:'3,989',type:'闭源'},
+    {rank:6,model:'gpt-5.2-chat-latest',vendor:'OpenAI',elo:1481,votes:'7,208',type:'闭源'},
+    {rank:7,model:'gemini-3-flash',vendor:'Google',elo:1474,votes:'30,514',type:'闭源'},
+    {rank:8,model:'grok-4.1-thinking',vendor:'xAI',elo:1473,votes:'40,567',type:'闭源'},
+    {rank:9,model:'glm-5',vendor:'智谱AI',elo:1460,votes:'15,200+',type:'开源'},
+    {rank:10,model:'kimi-k2.5',vendor:'Moonshot',elo:1448,votes:'8,500+',type:'开源'},
+    {rank:11,model:'deepseek-r1',vendor:'DeepSeek',elo:1442,votes:'12,000+',type:'开源'},
+    {rank:12,model:'qwen3.5-397b',vendor:'阿里',elo:1438,votes:'9,800+',type:'开源'},
+  ],
+  code: [
+    {rank:1,model:'claude-opus-4-6-thinking',vendor:'Anthropic',elo:1552,votes:'2,891',type:'闭源'},
+    {rank:2,model:'claude-opus-4-6',vendor:'Anthropic',elo:1552,votes:'3,677',type:'闭源'},
+    {rank:3,model:'glm-5',vendor:'智谱AI',elo:1447,votes:'3,608',type:'开源'},
+    {rank:4,model:'glm-4.7',vendor:'智谱AI',elo:1442,votes:'5,136',type:'开源'},
+    {rank:5,model:'gpt-5.4-high',vendor:'OpenAI',elo:1460,votes:'1,410',type:'闭源'},
+    {rank:6,model:'gemini-3.1-pro',vendor:'Google',elo:1457,votes:'3,510',type:'闭源'},
+    {rank:7,model:'qwen3.5-coder-32b',vendor:'阿里',elo:1435,votes:'2,200+',type:'开源'},
+    {rank:8,model:'deepseek-r1',vendor:'DeepSeek',elo:1428,votes:'4,500+',type:'开源'},
+  ],
+  vision: [
+    {rank:1,model:'gemini-3-pro',vendor:'Google',elo:1288,votes:'12,595',type:'闭源'},
+    {rank:2,model:'gemini-3.1-pro',vendor:'Google',elo:1278,votes:'3,483',type:'闭源'},
+    {rank:3,model:'gemini-3-flash',vendor:'Google',elo:1276,votes:'11,557',type:'闭源'},
+    {rank:4,model:'gpt-5.2-chat',vendor:'OpenAI',elo:1271,votes:'1,442',type:'闭源'},
+    {rank:8,model:'kimi-k2.5-thinking',vendor:'Moonshot',elo:1248,votes:'5,181',type:'开源'},
+    {rank:10,model:'qwen3-vl',vendor:'阿里',elo:1235,votes:'3,000+',type:'开源'},
+  ],
+  doc: [
+    {rank:1,model:'claude-opus-4-6',vendor:'Anthropic',elo:1524,votes:'4,336',type:'闭源'},
+    {rank:2,model:'gemini-3.1-pro',vendor:'Google',elo:1457,votes:'3,972',type:'闭源'},
+    {rank:3,model:'gpt-5.4',vendor:'OpenAI',elo:1483,votes:'1,349',type:'闭源'},
+    {rank:5,model:'kimi-k2',vendor:'Moonshot',elo:1430,votes:'4,000+',type:'开源'},
+    {rank:6,model:'qwen3.5',vendor:'阿里',elo:1418,votes:'3,200+',type:'开源'},
+    {rank:7,model:'deepseek-r1',vendor:'DeepSeek',elo:1405,votes:'3,800+',type:'开源'},
+  ]
+};
+
+const chinaModels = [
+  {name:'DeepSeek R1',vendor:'深度求索',params:'671B MoE',color:'var(--ey-blue)',tags:['开源','推理'],
+   desc:'全球开源推理模型标杆。MMLU-Pro 84.5%，AIME 79.8%。输入价格仅 $0.27/1M tokens。',
+   strengths:'推理链、数学、代码',bench:{mmlu_pro:'84.5',aime:'79.8',lcb:'72.0'},
+   api_in:'0.27',api_out:'1.10',ctx:'128K',free:'充裕（每日额度）',web:'⭐⭐⭐⭐',file:'✅',voice:'❌',multi:'文本'},
+  {name:'Qwen3.5 397B',vendor:'阿里巴巴',params:'397B MoE (A17B)',color:'var(--ey-purple)',tags:['开源','代码强'],
+   desc:'阿里最新旗舰，代码和数学能力突出。Arena Code 全球前10。免费商用。',
+   strengths:'代码、数学、多语言',bench:{mmlu_pro:'82.1',aime:'75.3',lcb:'78.5'},
+   api_in:'0.00',api_out:'0.00',ctx:'128K',free:'通义千问App免费',web:'⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文'},
+  {name:'GLM-5',vendor:'智谱AI',params:'开放权重',color:'var(--ey-teal)',tags:['开源','全能'],
+   desc:'Arena Code 全球第3（仅次双 Opus）。开源权重中 Intelligence Index 最高(50)。文档理解强。',
+   strengths:'代码、文档、全能均衡',bench:{mmlu_pro:'80.3',aime:'72.1',lcb:'80.2'},
+   api_in:'0.50',api_out:'2.00',ctx:'128K',free:'有限',web:'⭐⭐⭐',file:'✅',voice:'✅',multi:'图文'},
+  {name:'Kimi K2.5',vendor:'Moonshot AI',params:'开放权重',color:'var(--ey-orange)',tags:['开源','长文本'],
+   desc:'Vision Arena 全球第8。200万 token 超长上下文。文档处理与信息提取能力极强。',
+   strengths:'长文本、文档、视觉',bench:{mmlu_pro:'78.5',aime:'68.0',lcb:'70.5'},
+   api_in:'1.00',api_out:'4.00',ctx:'2M',free:'每日免费额度',web:'⭐⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文'},
+  {name:'豆包 Seed 2.0',vendor:'字节跳动',params:'未公开',color:'var(--ey-orange-light)',tags:['闭源','创意'],
+   desc:'Vision Arena 有排名。在创意文案、短视频脚本等场景表现优异。字节生态深度整合。',
+   strengths:'创意文案、对话、社交',bench:{mmlu_pro:'76.0',aime:'62.0',lcb:'65.0'},
+   api_in:'0.40',api_out:'1.60',ctx:'128K',free:'免费额度大',web:'⭐⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文音'},
+  {name:'通义千问 Qwen-Max',vendor:'阿里云',params:'闭源API',color:'var(--ey-green)',tags:['闭源','生态'],
+   desc:'阿里云企业级API，稳定性高。与阿里云生态深度集成，钉钉、淘宝场景优化。',
+   strengths:'企业集成、稳定性',bench:{mmlu_pro:'81.0',aime:'70.5',lcb:'74.0'},
+   api_in:'0.80',api_out:'2.00',ctx:'128K',free:'通义App免费',web:'⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文'},
+  {name:'文心一言 4.5',vendor:'百度',params:'闭源',color:'#FF4444',tags:['闭源','搜索'],
+   desc:'百度搜索深度整合。中文理解好，知识问答准确。企业版支持RAG知识库。',
+   strengths:'中文理解、搜索增强',bench:{mmlu_pro:'75.0',aime:'58.0',lcb:'62.0'},
+   api_in:'1.20',api_out:'4.80',ctx:'128K',free:'免费额度',web:'⭐⭐⭐',file:'✅',voice:'✅',multi:'图文'},
+  {name:'讯飞星火 4.0',vendor:'科大讯飞',params:'闭源',color:'var(--ey-cyan)',tags:['闭源','语音'],
+   desc:'语音交互能力业界领先，支持实时语音对话。教育、医疗场景深耕。',
+   strengths:'语音交互、教育',bench:{mmlu_pro:'73.5',aime:'55.0',lcb:'58.0'},
+   api_in:'0.60',api_out:'2.40',ctx:'128K',free:'免费额度',web:'⭐⭐⭐',file:'✅',voice:'✅✅',multi:'图文音'},
+];
+
+const globalModels = [
+  {name:'GPT-5.4',vendor:'OpenAI',params:'闭源',color:'var(--ey-green)',tags:['闭源','旗舰'],
+   desc:'OpenAI 最新旗舰。Arena Text #5，Doc #3。代码和推理能力顶级，多模态原生。',
+   strengths:'全能旗舰、工具调用',bench:{mmlu_pro:'86.5',aime:'85.2',lcb:'85.0'},
+   api_in:'10.00',api_out:'40.00',ctx:'128K',free:'有限',web:'⭐⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文音视频'},
+  {name:'GPT-5.2 Chat',vendor:'OpenAI',params:'闭源',color:'var(--ey-teal)',tags:['闭源','性价比'],
+   desc:'OpenAI 高性价比选项。Arena Text #6，Vision #4。日常使用均衡之选。',
+   strengths:'均衡、速度',bench:{mmlu_pro:'83.0',aime:'78.0',lcb:'80.0'},
+   api_in:'2.50',api_out:'10.00',ctx:'128K',free:'有限',web:'⭐⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文音'},
+  {name:'Gemini 3.1 Pro',vendor:'Google',params:'闭源',color:'var(--ey-blue)',tags:['闭源','多模态'],
+   desc:'Artificial Analysis Intelligence Index #1 (57分)。Vision Arena #1-2。Google 搜索原生整合。',
+   strengths:'多模态、搜索、长上下文',bench:{mmlu_pro:'87.0',aime:'83.5',lcb:'82.0'},
+   api_in:'1.25',api_out:'10.00',ctx:'1M',free:'Gemini App免费',web:'⭐⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文音视频'},
+  {name:'Gemini 3 Flash',vendor:'Google',params:'闭源',color:'var(--ey-cyan)',tags:['闭源','高速'],
+   desc:'Google 高速模型。Arena Vision #3，成本极低。适合高并发场景。',
+   strengths:'速度、成本、多模态',bench:{mmlu_pro:'80.0',aime:'72.0',lcb:'75.0'},
+   api_in:'0.15',api_out:'0.60',ctx:'1M',free:'Gemini App免费',web:'⭐⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文音视频'},
+  {name:'Claude Opus 4.6',vendor:'Anthropic',params:'闭源',color:'var(--ey-magenta)',tags:['闭源','推理'],
+   desc:'Arena Text #1 (1503 ELO)，Code #1-2。推理与代码王者。文档理解极强。',
+   strengths:'推理、代码、文档',bench:{mmlu_pro:'88.0',aime:'86.0',lcb:'88.5'},
+   api_in:'15.00',api_out:'75.00',ctx:'200K',free:'有限',web:'⭐⭐⭐⭐',file:'✅',voice:'❌',multi:'图文'},
+  {name:'Claude Sonnet 4.6',vendor:'Anthropic',params:'闭源',color:'var(--ey-purple)',tags:['闭源','均衡'],
+   desc:'Arena Doc #2。Opus 的低成本替代，代码能力仍进入 Code Top 5。',
+   strengths:'代码、文档、性价比',bench:{mmlu_pro:'85.0',aime:'80.0',lcb:'84.0'},
+   api_in:'3.00',api_out:'15.00',ctx:'200K',free:'有限',web:'⭐⭐⭐⭐',file:'✅',voice:'❌',multi:'图文'},
+  {name:'Grok 4.2',vendor:'xAI',params:'闭源',color:'var(--ey-orange)',tags:['闭源','实时'],
+   desc:'Arena Text #2。X平台实时信息获取。推理模式 strong。',
+   strengths:'实时搜索、推理',bench:{mmlu_pro:'85.5',aime:'82.0',lcb:'78.0'},
+   api_in:'3.00',api_out:'15.00',ctx:'2M',free:'X Premium',web:'⭐⭐⭐⭐',file:'✅',voice:'✅',multi:'图文音'},
+  {name:'Llama 4 Maverick',vendor:'Meta',params:'400B MoE 开源',color:'var(--ey-blue-dark)',tags:['开源','生态'],
+   desc:'Meta 开源旗舰。10M token 超长上下文。社区微调生态丰富。',
+   strengths:'开源生态、长上下文',bench:{mmlu_pro:'79.0',aime:'68.0',lcb:'71.0'},
+   api_in:'0.20',api_out:'0.80',ctx:'10M',free:'自部署',web:'❌(需自部署)',file:'✅',voice:'❌',multi:'图文'},
+];
+
+const benchmarks = [
+  {name:'MMLU-Pro',full:'Massive Multitask Language Understanding - Professional',color:'var(--ey-blue)',
+   desc:'综合知识理解评测，涵盖57个学科（数学、物理、法律、医学等）的专业级题目。相比原版MMLU难度大幅提升，更贴近真实专业场景。分数越高表示模型知识面越广、理解越深。'},
+  {name:'AIME 2025',full:'American Invitational Mathematics Examination',color:'var(--ey-yellow)',
+   desc:'美国数学邀请赛题目，要求解题过程展示完整推理链。测试模型的数学推理能力上限。满分1.0，0.9以上即属顶级。DeepSeek R1 和 GPT-5.4 等均在此项表现突出。'},
+  {name:'LiveCodeBench',full:'Live Code Benchmark',color:'var(--ey-green)',
+   desc:'实时编程评测，使用最近发布的编程竞赛题目（防止数据泄露）。测试模型的真实代码生成能力。分数越高表示编程实战能力越强。'},
+  {name:'Arena ELO',full:'Chatbot Arena ELO Rating',color:'var(--ey-orange)',
+   desc:'基于人类偏好盲评的评分系统。两位模型同台竞技，人类裁判匿名投票选出更优回答。ELO 机制类似国际象棋排名，是目前最权威的模型比较方式之一。'},
+  {name:'GPQA Diamond',full:'Google-Proof Q&A Diamond',color:'var(--ey-magenta)',
+   desc:'专家级问答评测，题目由博士级专家创建并验证，连领域专家也难以回答。测试模型在高难度专业知识场景的表现。'},
+  {name:'Intelligence Index',full:'Artificial Analysis Intelligence Index',color:'var(--ey-purple)',
+   desc:'Artificial Analysis 综合智能指数（0-100），综合 MMLU-Pro、GPQA、AIME、LiveCodeBench 等多维度标准化后加权计算。Gemini 3.1 Pro 和 GPT-5.4 以57分并列第一。'},
+];
+
+const recommendations = [
+  {title:'金融/法律合规场景',icon:'fa-scale-balanced',color:'var(--ey-blue)',
+   primary:'DeepSeek R1 + GLM-5',reason:'推理能力强，支持私有化部署，满足数据不出域要求',
+   backup:'Qwen3.5（开源备选）',cost:'月均 ¥5,000-20,000（含私有化硬件）'},
+  {title:'电商/内容创作',icon:'fa-paint-brush',color:'var(--ey-orange)',
+   primary:'豆包 Seed 2.0 / GPT-5.2',reason:'创意文案能力强，字节/阿里生态整合',
+   backup:'Gemini 3 Flash（低成本高并发）',cost:'月均 ¥2,000-8,000（API调用）'},
+  {title:'企业知识库/RAG',icon:'fa-database',color:'var(--ey-teal)',
+   primary:'Kimi K2.5 + Qwen3.5',reason:'2M上下文窗口处理长文档，中文能力强',
+   backup:'GLM-5（文档理解强）',cost:'月均 ¥3,000-15,000'},
+  {title:'软件开发/代码审查',icon:'fa-code',color:'var(--ey-green)',
+   primary:'GLM-5 / Qwen3.5 Coder',reason:'Arena Code Top 3，开源可私有化',
+   backup:'DeepSeek R1（推理代码强）',cost:'月均 ¥2,000-10,000'},
+  {title:'客服/对话系统',icon:'fa-headset',color:'var(--ey-purple)',
+   primary:'Gemini 3 Flash / Qwen3.5',reason:'低成本高并发，多模态支持',
+   backup:'豆包（中文对话自然）',cost:'月均 ¥1,000-5,000'},
+  {title:'多模态分析（图/文/表）',icon:'fa-image',color:'var(--ey-magenta)',
+   primary:'Gemini 3.1 Pro / GPT-5.4',reason:'Vision Arena Top 3，多模态原生',
+   backup:'Kimi K2.5（文档处理强）',cost:'月均 ¥5,000-30,000'},
+];
+
+// ===== RENDER FUNCTIONS =====
+
+function renderArena(cat) {
+  const data = arenaData[cat] || [];
+  const body = document.getElementById('arena-body');
+  body.innerHTML = data.map(d => `
+    <tr>
+      <td style="font-weight:700;color:${d.rank<=3?'var(--ey-yellow)':'var(--ey-gray-med)'}">${d.rank}</td>
+      <td style="font-weight:600">${d.model}</td>
+      <td>${d.vendor}</td>
+      <td style="font-weight:700;color:var(--ey-yellow)">${d.elo}</td>
+      <td style="color:var(--ey-gray-dark)">${d.votes}</td>
+      <td><span class="badge" style="background:${d.type==='开源'?'rgba(53,164,232,.15)':'rgba(178,72,145,.15)'};color:${d.type==='开源'?'var(--ey-blue)':'var(--ey-magenta)'}">${d.type}</span></td>
+    </tr>
+  `).join('');
+}
+
+function showArena(cat) {
+  document.querySelectorAll('#arena-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderArena(cat);
+}
+
+function renderModelCards(models, containerId) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = models.map(m => `
+    <div class="card" style="border-top:3px solid ${m.color}">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:.8rem">
+        <div>
+          <div style="font-weight:700;font-size:1.1rem">${m.name}</div>
+          <div style="font-size:.78rem;color:var(--ey-gray-dark)">${m.vendor} · ${m.params}</div>
+        </div>
+        <div style="display:flex;gap:.3rem">${m.tags.map(t=>`<span class="badge" style="background:rgba(255,255,255,.08);color:var(--ey-gray-med)">${t}</span>`).join('')}</div>
+      </div>
+      <p style="font-size:.83rem;color:var(--ey-gray-med);margin-bottom:1rem">${m.desc}</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1rem">
+        ${m.bench?Object.entries(m.bench).map(([k,v])=>`<div style="background:rgba(0,0,0,.2);padding:.5rem;border-radius:8px;text-align:center"><div style="font-size:.65rem;color:var(--ey-gray-dark)">${k.replace('_',' ').toUpperCase()}</div><div style="font-weight:700;font-size:.95rem;color:${parseFloat(v)>=80?'var(--ey-green)':parseFloat(v)>=70?'var(--ey-yellow)':'var(--ey-orange)'}">${v}</div></div>`).join(''):''}
+      </div>
+      <div style="font-size:.78rem;color:var(--ey-gray-dark)"><i class="fas fa-star" style="color:var(--ey-yellow)"></i> 优势：${m.strengths}</div>
+    </div>
+  `).join('');
+}
+
+function renderBenchmarks() {
+  document.getElementById('bench-cards').innerHTML = benchmarks.map(b => `
+    <div class="card" style="border-left:3px solid ${b.color}">
+      <div style="font-weight:700;color:${b.color};margin-bottom:.3rem">${b.name}</div>
+      <div style="font-size:.72rem;color:var(--ey-gray-dark);margin-bottom:.5rem;font-style:italic">${b.full}</div>
+      <p style="font-size:.82rem;color:var(--ey-gray-med)">${b.desc}</p>
+    </div>
+  `).join('');
+}
+
+function renderCostTable() {
+  const all = [...chinaModels, ...globalModels];
+  const sorted = all.sort((a,b) => parseFloat(a.api_in) - parseFloat(b.api_in));
+  document.getElementById('cost-table-body').innerHTML = sorted.map(m => {
+    const rating = parseFloat(m.api_in) < 0.3 ? '⭐⭐⭐⭐⭐' : parseFloat(m.api_in) < 1 ? '⭐⭐⭐⭐' : parseFloat(m.api_in) < 5 ? '⭐⭐⭐' : parseFloat(m.api_in) < 15 ? '⭐⭐' : '⭐';
+    return `<tr>
+      <td style="font-weight:600">${m.name}</td>
+      <td>$${m.api_in}</td>
+      <td>$${m.api_out}</td>
+      <td>${m.ctx}</td>
+      <td>${rating}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPersonalTable() {
+  const all = [...chinaModels, ...globalModels];
+  document.getElementById('personal-table-body').innerHTML = all.map(m => `
+    <tr>
+      <td style="font-weight:600">${m.name}</td>
+      <td>${m.free}</td>
+      <td>${m.web}</td>
+      <td>${m.file}</td>
+      <td>${m.voice}</td>
+      <td>${m.multi}</td>
+      <td style="font-size:.8rem">${m.web.includes('5')?'优秀':m.web.includes('4')?'良好':'一般'}</td>
+    </tr>
+  `).join('');
+}
+
+function showCost(type) {
+  document.querySelectorAll('#cost .tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('cost-enterprise').style.display = type === 'enterprise' ? 'block' : 'none';
+  document.getElementById('cost-personal').style.display = type === 'personal' ? 'block' : 'none';
+}
+
+function renderDeployTable() {
+  const deployModels = [
+    {name:'Qwen3.5 397B',license:'Apache 2.0',gpu:'8×A100 80G',quant:'GPTQ/AWQ 4bit→2×A100',diff:'⭐⭐⭐',scene:'企业全能、代码'},
+    {name:'DeepSeek R1 671B',license:'MIT',gpu:'8×A100 80G',quant:'GPTQ 4bit→2×A100',diff:'⭐⭐⭐',scene:'推理、数学'},
+    {name:'GLM-5',license:'Apache 2.0',gpu:'8×A100 80G',quant:'vLLM/AWQ→4×A100',diff:'⭐⭐⭐',scene:'代码、文档'},
+    {name:'Kimi K2.5',license:'开放权重(商用)',gpu:'8×A100 80G',quant:'支持量化→4×A100',diff:'⭐⭐⭐',scene:'长文档、RAG'},
+    {name:'Llama 4 Maverick',license:'Llama License',gpu:'8×A100 80G',quant:'GPTQ→2×A100',diff:'⭐⭐⭐',scene:'多语言、长上下文'},
+    {name:'Qwen3.5 Coder 32B',license:'Apache 2.0',gpu:'1×A100 40G',quant:'GPTQ→1×A10G',diff:'⭐⭐',scene:'轻量代码'},
+    {name:'DeepSeek V3 671B',license:'DeepSeek License',gpu:'8×A100 80G',quant:'GPTQ→2×A100',diff:'⭐⭐⭐',scene:'通用对话'},
+    {name:'豆包 Seed 2.0',license:'闭源',gpu:'—',quant:'—',diff:'N/A',scene:'仅API调用'},
+    {name:'GPT-5.4',license:'闭源',gpu:'—',quant:'—',diff:'N/A',scene:'仅API调用'},
+    {name:'Gemini 3.1 Pro',license:'闭源',gpu:'—',quant:'—',diff:'N/A',scene:'仅API / Vertex AI'},
+  ];
+  document.getElementById('deploy-table-body').innerHTML = deployModels.map(m => `
+    <tr>
+      <td style="font-weight:600">${m.name}</td>
+      <td><span class="badge" style="background:${m.license.includes('Apache')?'rgba(45,183,87,.15);color:var(--ey-green)':m.license.includes('MIT')?'rgba(45,183,87,.15);color:var(--ey-green)':m.license.includes('闭源')?'rgba(255,129,10,.15);color:var(--ey-orange)':'rgba(114,75,195,.15);color:var(--ey-purple)'}">${m.license}</span></td>
+      <td style="font-size:.8rem">${m.gpu}</td>
+      <td style="font-size:.8rem">${m.quant}</td>
+      <td>${m.diff}</td>
+      <td style="font-size:.8rem">${m.scene}</td>
+    </tr>
+  `).join('');
+}
+
+function renderRecommendations() {
+  document.getElementById('recommend-cards').innerHTML = recommendations.map(r => `
+    <div class="card card-highlight" style="display:flex;gap:1.5rem;align-items:start;flex-wrap:wrap">
+      <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="fas ${r.icon}" style="color:${r.color};font-size:1.3rem"></i>
+      </div>
+      <div style="flex:1;min-width:240px">
+        <div style="font-weight:700;margin-bottom:.3rem">${r.title}</div>
+        <div style="font-size:.85rem;margin-bottom:.5rem">
+          <span style="color:var(--ey-yellow)">首选：</span>${r.primary}
+        </div>
+        <div style="font-size:.82rem;color:var(--ey-gray-dark);margin-bottom:.3rem">${r.reason}</div>
+        <div style="font-size:.82rem;color:var(--ey-gray-dark)">备选：${r.backup}</div>
+        <div style="font-size:.78rem;color:var(--ey-teal);margin-top:.3rem">💰 参考成本：${r.cost}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderVertical() {
+  const verticals = [
+    {name:'代码开发',leader:'GLM-5 / Qwen3.5 Coder',desc:'Arena Code 全球前5，开源可私有化，适合企业代码审查和Copilot',color:'var(--ey-blue)'},
+    {name:'数学推理',leader:'DeepSeek R1 / GPT-5.4',desc:'AIME 成绩顶尖，适合量化分析、科学计算场景',color:'var(--ey-green)'},
+    {name:'长文本处理',leader:'Kimi K2.5 / Gemini',desc:'2M-10M 上下文窗口，合同审查、论文分析、报告生成',color:'var(--ey-orange)'},
+    {name:'创意文案',leader:'豆包 / GPT-5.2',desc:'营销文案、短视频脚本、社交媒体内容生成',color:'var(--ey-magenta)'},
+    {name:'视觉理解',leader:'Gemini 3.1 Pro / GPT-5.4',desc:'图片分析、图表解读、多模态文档处理',color:'var(--ey-purple)'},
+    {name:'中文对话',leader:'Kimi / 豆包 / Qwen',desc:'中文理解最自然，客服、知识问答、教育场景',color:'var(--ey-teal)'},
+    {name:'语音交互',leader:'讯飞星火 / Gemini',desc:'实时语音对话，智能硬件、车载、会议纪要',color:'var(--ey-cyan)'},
+    {name:'企业搜索',leader:'文心一言 / Gemini',desc:'搜索引擎整合，知识检索、实时信息',color:'var(--ey-orange-light)'},
+  ];
+  document.getElementById('vertical-cards').innerHTML = verticals.map(v => `
+    <div class="card" style="border-top:2px solid ${v.color}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem">
+        <span style="font-weight:700;color:${v.color}">${v.name}</span>
+        <span class="badge" style="background:rgba(255,255,255,.08)">${v.leader.split('/')[0].trim()}</span>
+      </div>
+      <p style="font-size:.8rem;color:var(--ey-gray-dark)">${v.desc}</p>
+    </div>
+  `).join('');
+}
+
+// ===== CHARTS =====
+function initCharts() {
+  // Cost Chart
+  const costModels = [...chinaModels, ...globalModels].sort((a,b) => parseFloat(a.api_in) - parseFloat(b.api_in)).slice(0, 16);
+  new Chart(document.getElementById('costChart'), {
+    type: 'bar',
+    data: {
+      labels: costModels.map(m => m.name),
+      datasets: [
+        {label:'输入价格 $/1M',data:costModels.map(m=>parseFloat(m.api_in)),backgroundColor:'rgba(53,164,232,0.7)',borderRadius:4},
+        {label:'输出价格 $/1M',data:costModels.map(m=>parseFloat(m.api_out)),backgroundColor:'rgba(255,230,0,0.5)',borderRadius:4},
+      ]
+    },
+    options: {
+      indexAxis:'y',responsive:true,
+      plugins:{legend:{labels:{color:'#C4C4CD',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#747480'},grid:{color:'rgba(255,255,255,.05)'}},
+        y:{ticks:{color:'#C4C4CD',font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
+
+  // Deploy Chart
+  new Chart(document.getElementById('deployChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Qwen3.5 Coder 32B','Qwen3.5 397B','DeepSeek R1','GLM-5','Kimi K2.5','Llama 4 Maverick'],
+      datasets: [
+        {label:'最低GPU数量(A100)',data:[1,8,8,8,8,8],backgroundColor:['rgba(45,183,87,0.7)','rgba(255,230,0,0.5)','rgba(255,129,10,0.5)','rgba(0,162,138,0.5)','rgba(178,72,145,0.5)','rgba(21,92,180,0.5)'],borderRadius:6},
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{color:'#747480'},grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'A100 80G 数量',color:'#747480'}},
+        x:{ticks:{color:'#C4C4CD'},grid:{display:false}}
+      }
+    }
+  });
+
+  // Radar Chart
+  new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: ['代码','数学','长文本','创意','视觉','中文'],
+      datasets: [
+        {label:'DeepSeek R1',data:[88,92,75,65,70,80],borderColor:'var(--ey-blue)',backgroundColor:'rgba(53,164,232,0.1)',pointBackgroundColor:'var(--ey-blue)'},
+        {label:'Qwen3.5',data:[90,85,80,72,75,88],borderColor:'var(--ey-purple)',backgroundColor:'rgba(114,75,195,0.1)',pointBackgroundColor:'var(--ey-purple)'},
+        {label:'Kimi K2.5',data:[75,72,95,78,82,90],borderColor:'var(--ey-orange)',backgroundColor:'rgba(255,129,10,0.1)',pointBackgroundColor:'var(--ey-orange)'},
+        {label:'豆包',data:[65,60,75,92,78,88],borderColor:'var(--ey-orange-light)',backgroundColor:'rgba(255,152,49,0.1)',pointBackgroundColor:'var(--ey-orange-light)'},
+        {label:'GPT-5.4',data:[92,90,82,85,90,75],borderColor:'var(--ey-green)',backgroundColor:'rgba(45,183,87,0.1)',pointBackgroundColor:'var(--ey-green)'},
+        {label:'Gemini 3.1 Pro',data:[85,85,90,80,95,72],borderColor:'var(--ey-teal)',backgroundColor:'rgba(0,162,138,0.1)',pointBackgroundColor:'var(--ey-teal)'},
+      ]
+    },
+    options: {
+      responsive:true,
+      scales:{r:{grid:{color:'rgba(255,255,255,.08)'},angleLines:{color:'rgba(255,255,255,.08)'},ticks:{display:false},pointLabels:{color:'#C4C4CD',font:{size:12}},suggestedMin:0,suggestedMax:100}},
+      plugins:{legend:{labels:{color:'#C4C4CD',font:{size:11},usePointStyle:true}}}
+    }
+  });
+}
+
+// ===== LIDAR CANVAS =====
+function initLidar() {
+  const canvas = document.getElementById('lidar-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, points = [];
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    points = Array.from({length: 350}, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      z: Math.random(), size: Math.random() * 2 + 0.5,
+      vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.15,
+      hue: Math.random() < 0.3 ? 52 : Math.random() < 0.5 ? 196 : 170
+    }));
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,230,0,0.03)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < w; x += 80) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+    for (let y = 0; y < h; y += 80) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+    points.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+      const alpha = 0.15 + p.z * 0.6;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * (0.5 + p.z * 0.8), 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${p.hue}, 80%, 65%, ${alpha})`;
+      ctx.fill();
+    });
+
+    // Connect nearby points
+    ctx.lineWidth = 0.3;
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const dx = points[i].x - points[j].x, dy = points[i].y - points[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.moveTo(points[i].x, points[i].y);
+          ctx.lineTo(points[j].x, points[j].y);
+          ctx.strokeStyle = `rgba(255,230,0,${0.06 * (1 - dist / 100)})`;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+}
+
+// ===== SCROLL SPY =====
+function initScrollSpy() {
+  const links = document.querySelectorAll('.toc-link');
+  const sections = ['hero','arena','china','global','bench','cost','deploy','vertical','trend','recommend'];
+  window.addEventListener('scroll', () => {
+    let current = sections[0];
+    for (const id of sections) {
+      const el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top < 200) current = id;
+    }
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  });
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  renderArena('text');
+  renderModelCards(chinaModels, 'china-cards');
+  renderModelCards(globalModels, 'global-cards');
+  renderBenchmarks();
+  renderCostTable();
+  renderPersonalTable();
+  renderDeployTable();
+  renderRecommendations();
+  renderVertical();
+  initCharts();
+  initLidar();
+  initScrollSpy();
+});
+</script>
+</body>
+</html>
